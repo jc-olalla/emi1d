@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emi1d.data_preparation.filtering &mdash; emi1d 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=7026087e"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            emi1d
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide/index.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">emi1d</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">emi1d</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">emi1d.data_preparation.filtering</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for emi1d.data_preparation.filtering</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="c1"># from scipy.special import jv as besselj</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">j0</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">j1</span>
+<span class="kn">import</span> <span class="nn">scipy.integrate</span> <span class="k">as</span> <span class="nn">integrate</span>
+<span class="kn">from</span> <span class="nn">hankel</span> <span class="kn">import</span> <span class="n">HankelTransform</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<div class="viewcode-block" id="calc_epsilon_d">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.calc_epsilon_d">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_epsilon_d</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;Q&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;I&#39;</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">head_i</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">head_i</span><span class="p">)</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_i</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;noise_abs&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="n">df</span><span class="p">[</span><span class="n">head_i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="get_relnoise_vector">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.get_relnoise_vector">[docs]</a>
+<span class="k">def</span> <span class="nf">get_relnoise_vector</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;relnoise&#39;</span><span class="p">)]</span>
+    <span class="n">relnoise</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">head_i</span> <span class="ow">in</span> <span class="n">headers</span><span class="p">:</span>
+        <span class="n">relnoise</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">head_i</span><span class="p">][</span><span class="n">index</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">relnoise</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="add_colorbar_method2">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.add_colorbar_method2">[docs]</a>
+<span class="k">def</span> <span class="nf">add_colorbar_method2</span><span class="p">(</span><span class="n">RHO_grid</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span><span class="p">,</span> <span class="n">plotmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">plotmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mf">0.25</span><span class="p">):</span>
+    <span class="c1"># sep: separation of the color bar from the main ax in centimeters</span>
+    <span class="c1"># width: width of the color bar ax in centimeters</span>
+
+    <span class="n">fig_dummy</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">ax_dummy</span> <span class="o">=</span> <span class="n">fig_dummy</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">ax_dummy</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">RHO_grid</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;jet&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">plotmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">plotmax</span><span class="p">)</span>
+    <span class="c1"># plt.close(fig=fig_dummy)  # this used to work before, now it doesn&#39;t (version change?)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_dummy</span><span class="p">)</span>
+
+    <span class="c1"># bar ax</span>
+    <span class="n">fig_size_cm</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span> <span class="o">*</span> <span class="mf">2.54</span>
+    <span class="n">pos_ax</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">get_position</span><span class="p">()</span><span class="o">.</span><span class="n">get_points</span><span class="p">()</span>
+    <span class="c1">#ax_width = pos_ax[1, 0] - pos_ax[0, 0]</span>
+    <span class="n">ax_height</span> <span class="o">=</span> <span class="n">pos_ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pos_ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">ax_bar</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_axes</span><span class="p">([</span><span class="n">pos_ax</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">sep</span> <span class="o">/</span> <span class="n">fig_size_cm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pos_ax</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">width</span> <span class="o">/</span> <span class="n">fig_size_cm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ax_height</span><span class="p">])</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">ax_bar</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;vertical&#39;</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="is_outlier">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.is_outlier">[docs]</a>
+<span class="k">def</span> <span class="nf">is_outlier</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">filt_len</span><span class="p">,</span> <span class="n">thresh</span><span class="o">=</span><span class="mf">3.0</span><span class="p">):</span>
+	<span class="n">nsteps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">/</span> <span class="n">filt_len</span><span class="p">))</span>
+	<span class="n">valid</span> <span class="o">=</span> <span class="kc">True</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsteps</span><span class="p">):</span>
+		<span class="n">index_ini</span> <span class="o">=</span> <span class="n">i</span><span class="o">*</span><span class="n">filt_len</span>
+		<span class="n">index_end</span> <span class="o">=</span> <span class="n">i</span><span class="o">*</span><span class="n">filt_len</span><span class="o">+</span><span class="n">filt_len</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">filt_len</span><span class="o">+</span><span class="n">filt_len</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">))</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">filt_len</span><span class="o">+</span><span class="n">filt_len</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">array</span><span class="p">))</span>
+		<span class="n">array_i</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">index_ini</span><span class="p">:</span><span class="n">index_end</span><span class="p">]</span>
+
+		<span class="n">median</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">array_i</span><span class="p">)</span>
+		<span class="n">diff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">array_i</span> <span class="o">-</span> <span class="n">median</span><span class="p">))</span>
+		<span class="n">med_abs_deviation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+
+		<span class="n">modified_z_score</span> <span class="o">=</span> <span class="mf">0.6745</span> <span class="o">*</span> <span class="n">diff</span> <span class="o">/</span> <span class="n">med_abs_deviation</span>
+
+		<span class="n">valid_partial</span> <span class="o">=</span> <span class="p">(</span><span class="n">modified_z_score</span> <span class="o">&lt;</span> <span class="n">thresh</span><span class="p">)</span>
+
+		<span class="n">valid</span><span class="p">[</span><span class="n">index_ini</span><span class="p">:</span><span class="n">index_end</span><span class="p">]</span> <span class="o">=</span> <span class="n">valid_partial</span> <span class="o">*</span> <span class="p">(</span><span class="n">valid_partial</span>  <span class="o">==</span> <span class="kc">True</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="n">valid</span></div>
+
+
+<div class="viewcode-block" id="boxcar">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.boxcar">[docs]</a>
+<span class="k">def</span> <span class="nf">boxcar</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">filt_len</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">cumsum</span><span class="p">,</span> <span class="n">moving_aves</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">cumsum</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cumsum</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span><span class="o">&gt;=</span><span class="n">filt_len</span><span class="p">:</span>
+            <span class="n">moving_ave</span> <span class="o">=</span> <span class="p">(</span><span class="n">cumsum</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">cumsum</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="n">filt_len</span><span class="p">])</span><span class="o">/</span><span class="n">filt_len</span>
+            <span class="c1">#can do stuff with moving_ave here</span>
+            <span class="n">moving_aves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">moving_ave</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">moving_ave</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">moving_aves</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">moving_ave</span><span class="p">)</span>
+
+    <span class="n">array_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">moving_aves</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">array_2</span></div>
+
+    
+
+<div class="viewcode-block" id="separation_content">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.separation_content">[docs]</a>
+<span class="k">def</span> <span class="nf">separation_content</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="s1">&#39;HCP&#39;</span><span class="p">):</span>
+    <span class="n">sep_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nstring</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">headi</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">headi</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">nstring</span><span class="p">]</span> <span class="o">==</span> <span class="n">header</span><span class="p">:</span>
+            <span class="n">sep_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">headi</span><span class="p">[</span><span class="n">nstring</span><span class="p">:</span><span class="n">nstring</span><span class="o">+</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="n">sep_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">sep_list</span><span class="p">))</span>  <span class="c1"># remove repeated values</span>
+
+    <span class="k">return</span> <span class="n">sep_list</span></div>
+
+
+
+<div class="viewcode-block" id="calc_Q_HCP">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.calc_Q_HCP">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_Q_HCP</span><span class="p">(</span><span class="n">sigma_app</span><span class="p">,</span> <span class="n">separation</span><span class="p">):</span>
+    <span class="n">Q_HCP</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">9000.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">7</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">separation</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma_app</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Q_HCP</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">6</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="calc_Q_PRP">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.calc_Q_PRP">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_Q_PRP</span><span class="p">(</span><span class="n">sigma_app</span><span class="p">,</span> <span class="n">separation</span><span class="p">):</span>
+    <span class="n">Q_PRP</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">9000.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">7</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">separation</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma_app</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Q_PRP</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">6</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="rho_app_approx">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.rho_app_approx">[docs]</a>
+<span class="k">def</span> <span class="nf">rho_app_approx</span><span class="p">(</span><span class="n">hs_h0</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+    <span class="n">u0</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">rho_app</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">/</span> <span class="p">(</span><span class="mi">9000</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">u0</span> <span class="o">*</span> <span class="n">s</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">hs_h0</span>
+    <span class="k">return</span> <span class="n">rho_app</span> <span class="o">*</span> <span class="mi">1000</span></div>
+
+
+
+<div class="viewcode-block" id="dualem_fop">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_fop">[docs]</a>
+<span class="k">class</span> <span class="nc">dualem_fop</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zIN</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.03</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="mf">0.2</span>  <span class="c1"># height of the dualem (don&#39;t set it to zero; otherwise, the numerical integration crashes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">])</span>  <span class="c1"># coil spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">2.1</span><span class="p">,</span> <span class="mf">4.1</span><span class="p">,</span> <span class="mf">8.1</span><span class="p">])</span>  <span class="c1"># coil spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="mi">9000</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>  <span class="c1"># Hertz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">zIN</span><span class="p">)</span>  <span class="c1"># without air</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">zIN</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">7</span><span class="p">)</span>
+        <span class="c1">#self.ht_z = HankelTransform(nu=0, N=120, h=0.03)  # Create the HankelTransform instance</span>
+        <span class="c1">#self.ht_rho = HankelTransform(nu=1, N=120, h=0.03)</span>
+        <span class="c1">#self.ht_z = HankelTransform(nu=0, N=None, h=0.01)  # slow</span>
+        <span class="c1">#self.ht_rho = HankelTransform(nu=1, N=None, h=0.01)  # slow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ht_z</span> <span class="o">=</span> <span class="n">HankelTransform</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ht_rho</span> <span class="o">=</span> <span class="n">HankelTransform</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+<div class="viewcode-block" id="dualem_fop.f_r_over_r">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_fop.f_r_over_r">[docs]</a>
+    <span class="k">def</span> <span class="nf">f_r_over_r</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lambda_EM</span><span class="p">):</span>
+        <span class="n">k_N</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>  <span class="c1"># I&#39;m using Timo&#39;s type of grid</span>
+        <span class="n">u_cap_N</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">k_N</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+        <span class="n">u_cap_n</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># this is unnecessary?</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">):</span>
+            <span class="n">k_n</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>  <span class="c1"># I&#39;m using Timo&#39;s type of grid</span>
+            <span class="n">u_n</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">k_n</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+
+            <span class="n">u_cap_n</span> <span class="o">=</span> <span class="n">u_n</span> <span class="o">*</span> <span class="p">((</span><span class="n">u_cap_N</span> <span class="o">+</span> <span class="n">u_n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">u_n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="n">u_n</span> <span class="o">+</span> <span class="n">u_cap_N</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">u_n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+            <span class="n">u_cap_N</span> <span class="o">=</span> <span class="n">u_cap_n</span>
+
+        <span class="n">rTE</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">-</span> <span class="n">u_cap_N</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">+</span> <span class="n">u_cap_N</span><span class="p">)</span>
+        <span class="n">f_x</span> <span class="o">=</span> <span class="n">rTE</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">lambda_EM</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="n">lambda_EM</span>
+
+        <span class="k">return</span> <span class="n">f_x</span></div>
+
+
+<div class="viewcode-block" id="dualem_fop.response">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_fop.response">[docs]</a>
+    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>  <span class="c1"># TODO: vectorize this method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>  <span class="c1"># this might not work if I want to parallelize the code</span>
+        <span class="c1"># Hz equation 4.46 Ward / (4*pi*rho**3)</span>
+        <span class="n">Q_Hsz_over_H</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ht_z</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_r_over_r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span><span class="p">,</span> <span class="n">ret_err</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">I_Hsz_over_H</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ht_z</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_r_over_r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span><span class="p">,</span> <span class="n">ret_err</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+        <span class="c1"># Hrho equation 4.45 Ward / (4*pi*rho**3)</span>
+        <span class="n">Q_Hsrho_over_H</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ht_rho</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_r_over_r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span><span class="p">,</span> <span class="n">ret_err</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">I_Hsrho_over_H</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ht_rho</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">f_r_over_r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span><span class="p">,</span> <span class="n">ret_err</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+        <span class="n">fop_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i_coil</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span><span class="p">)):</span>
+            <span class="n">fop_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Q_Hsz_over_H</span><span class="p">[</span><span class="n">i_coil</span><span class="p">])</span>
+            <span class="n">fop_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">I_Hsz_over_H</span><span class="p">[</span><span class="n">i_coil</span><span class="p">])</span>
+            <span class="n">fop_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Q_Hsrho_over_H</span><span class="p">[</span><span class="n">i_coil</span><span class="p">])</span>
+            <span class="n">fop_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">I_Hsrho_over_H</span><span class="p">[</span><span class="n">i_coil</span><span class="p">])</span>
+
+        <span class="n">fop</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">fop_list</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="mi">6</span><span class="p">)</span>
+
+        <span class="c1">#fop = -np.array([Q_Hsz_over_H[0], I_Hsz_over_H[0], Q_Hsz_over_H[1], I_Hsz_over_H[1], Q_Hsz_over_H[2], I_Hsz_over_H[2], Q_Hsrho_over_H[0], I_Hsrho_over_H[0], Q_Hsrho_over_H[1], I_Hsrho_over_H[1], Q_Hsrho_over_H[2], I_Hsrho_over_H[2]])</span>
+
+        <span class="k">return</span> <span class="n">fop</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="dualem_invert">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert">[docs]</a>
+<span class="k">class</span> <span class="nc">dualem_invert</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">zIN</span><span class="p">,</span> <span class="n">lambda_reg</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">plot_steps</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_steps</span> <span class="o">=</span> <span class="n">plot_steps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">zIN</span><span class="p">)</span> 
+        <span class="c1">#self.weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span> 
+        <span class="c1">#sensors= [Q_Hsz_over_H[0], I_Hsz_over_H[0], Q_Hsrho_over_H[0], I_Hsrho_over_H[0], Q_Hsz_over_H[1], I_Hsz_over_H[1], Q_Hsrho_over_H[1], I_Hsrho_over_H[1], Q_Hsz_over_H[2], I_Hsz_over_H[2], Q_Hsrho_over_H[2], I_Hsrho_over_H[2]]</span>
+
+        <span class="c1"># Irregular grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zIN</span> <span class="o">=</span> <span class="n">zIN</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nIN</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">zIN</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zIN</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zN</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">zIN</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nIN</span><span class="p">]</span> <span class="o">+</span> <span class="n">zIN</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">nIN</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">dzN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zN</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dzN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="n">dzN</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">],</span> <span class="n">dzN</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_reg</span> <span class="o">=</span> <span class="n">lambda_reg</span>
+        <span class="c1">#self.rel_noise = rel_noise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fop</span> <span class="o">=</span> <span class="n">dualem_fop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">zIN</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">npoints</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ndata</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">coilspacing_HCP</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">coilspacing_PRP</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">,</span> <span class="s1">&#39;8&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ini_model</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">,</span> <span class="p">))</span>
+
+<div class="viewcode-block" id="dualem_invert.ini_model">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert.ini_model">[docs]</a>
+    <span class="k">def</span> <span class="nf">ini_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sigma_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">,</span> <span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">):</span>
+            <span class="n">sigma_avg</span> <span class="o">=</span> <span class="n">sigma_avg</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;H&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;mS_m&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1000.0</span>
+            <span class="n">sigma_avg</span> <span class="o">=</span> <span class="n">sigma_avg</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;P&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;mS_m&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">1000.0</span>
+
+        <span class="n">sigma_avg</span> <span class="o">=</span> <span class="n">sigma_avg</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndata</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma_ini</span> <span class="o">=</span> <span class="n">sigma_avg</span></div>
+
+
+<div class="viewcode-block" id="dualem_invert.objective_function">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert.objective_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_model_values</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">relnoise</span><span class="p">,</span> <span class="n">log_ini_model</span><span class="p">,</span> <span class="n">lambda_reg</span><span class="p">,</span> <span class="n">Cm</span><span class="p">):</span>
+        <span class="n">model_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_model_values</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">model_values</span><span class="p">)</span>
+        <span class="n">log_resp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">resp</span><span class="p">))</span>  <span class="c1"># negative values are physically possible</span>
+        <span class="n">log_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>  <span class="c1"># negative values are physically possible</span>
+
+        <span class="n">phi_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(((</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">relnoise</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">*</span> <span class="p">(</span><span class="n">log_d</span> <span class="o">-</span> <span class="n">log_resp</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">phi_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lambda_reg</span> <span class="o">*</span> <span class="p">(</span><span class="n">log_model_values</span> <span class="o">-</span> <span class="n">log_ini_model</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Cm</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Cm</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">((</span><span class="n">log_model_values</span> <span class="o">-</span> <span class="n">log_ini_model</span><span class="p">)))</span>
+
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">phi_d</span> <span class="o">+</span> <span class="n">phi_m</span>
+
+        <span class="k">return</span> <span class="n">phi</span></div>
+
+
+<div class="viewcode-block" id="dualem_invert.callbackF">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert.callbackF">[docs]</a>
+    <span class="k">def</span> <span class="nf">callbackF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_model_values_i</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;##################################&#39;</span><span class="p">)</span>
+        <span class="n">model_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_model_values_i</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">model_values</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_i</span><span class="p">,</span> <span class="n">resp</span><span class="p">,</span> <span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">d_i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">d_i</span><span class="p">,</span> <span class="s1">&#39;k-&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">20000</span><span class="p">,</span> <span class="mi">100000</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">pause</span><span class="p">(</span><span class="mf">0.000001</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="dualem_invert.C_matrix">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert.C_matrix">[docs]</a>
+    <span class="k">def</span> <span class="nf">C_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dzN</span><span class="p">,</span> <span class="n">C_m_type</span><span class="o">=</span><span class="s1">&#39;identity&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">C_m_type</span> <span class="o">==</span> <span class="s1">&#39;smooth&#39;</span><span class="p">:</span>
+            <span class="n">C_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">))</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">C_m</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">C_m</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">C_m</span> <span class="o">=</span> <span class="n">C_m</span> <span class="o">/</span> <span class="n">dzN</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">C_m_type</span> <span class="o">==</span> <span class="s1">&#39;identity&#39;</span><span class="p">:</span>
+            <span class="n">C_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">C_m</span></div>
+
+
+<div class="viewcode-block" id="dualem_invert.run_inversion">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert.run_inversion">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_inversion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="kn">import</span> <span class="nn">multiprocessing</span>
+        <span class="n">pool_obj</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">()</span>
+        <span class="n">list_of_inv_model</span> <span class="o">=</span> <span class="n">pool_obj</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loop_function</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">))</span>
+        <span class="n">RHO_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">rho_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_inv_model</span><span class="p">):</span>
+            <span class="n">RHO_grid</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">rho_i</span>
+
+        <span class="k">for</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;HCP&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;_inv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;PRP&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;_inv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1">#RHO_grid[:, pi] = 1.0 / inv_model</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Elapased time&#39;</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RHO_grid</span></div>
+
+
+
+<div class="viewcode-block" id="dualem_invert.loop_function">
+<a class="viewcode-back" href="../../../api/emi1d.data_preparation.html#emi1d.data_preparation.filtering.dualem_invert.loop_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">loop_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pi</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Point </span><span class="si">%5d</span><span class="s1"> out of </span><span class="si">%5d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pi</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">))</span>
+        <span class="c1"># Initial response</span>
+        <span class="n">ini_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_grid</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_ini</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span>
+        <span class="n">ini_resp_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">ini_model</span><span class="p">)</span>
+        <span class="n">log_ini_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ini_model</span><span class="p">)</span>
+
+        <span class="c1"># Assemble &quot;d&quot; vector (Measured response)</span>
+        <span class="n">d_array_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">ndata</span><span class="p">,))</span>
+        <span class="n">rel_noise_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">ndata</span><span class="p">,))</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i_dist</span><span class="p">,</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">):</span>
+            <span class="n">head_Q_HCP_i</span> <span class="o">=</span> <span class="s1">&#39;Q_HCP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+            <span class="n">head_I_HCP_i</span> <span class="o">=</span> <span class="s1">&#39;I_HCP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+            <span class="n">head_Q_PRP_i</span> <span class="o">=</span> <span class="s1">&#39;Q_PRP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+            <span class="n">head_I_PRP_i</span> <span class="o">=</span> <span class="s1">&#39;I_PRP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_Q_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_I_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_Q_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_I_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_Q_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_I_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_Q_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_I_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_i</span> <span class="o">=</span> <span class="n">d_array_i</span>
+
+        <span class="c1"># Assemble &quot;C&quot; matrix</span>
+        <span class="n">C_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dzN</span><span class="p">,</span> <span class="n">C_m_type</span><span class="o">=</span><span class="s1">&#39;smooth&#39;</span><span class="p">)</span>  <span class="c1"># (smoothness matrix)</span>
+
+        <span class="c1"># Inversion</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Measured response &#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">d_array_i</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial response &#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ini_resp_i</span><span class="p">)</span>
+
+        <span class="c1"># invEM = minimize(objective_function, log_ini_model, method=&quot;Newton-CG&quot;, jac=jacobian_phi_brute_force, args=C_m, tol=1.0e-6)  #</span>
+        <span class="n">invEM</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">log_ini_model</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;CG&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">d_array_i</span><span class="p">,</span> <span class="n">rel_noise_i</span><span class="p">,</span> <span class="n">log_ini_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_reg</span><span class="p">,</span> <span class="n">C_m</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">})</span>
+
+        <span class="n">inv_model</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">invEM</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># resistivity</span>
+        <span class="n">inv_resp_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">inv_model</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inv_model</span></div>
+</div>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Juan Chavez Olalla.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

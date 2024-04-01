@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emi1d.modeling package &mdash; emi1d 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=7026087e"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="emi1d.visualization package" href="emi1d.visualization.html" />
+    <link rel="prev" title="emi1d.inversion package" href="emi1d.inversion.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            emi1d
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide/index.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">emi1d</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="emi1d.html">emi1d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="emi1d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="emi1d.data_preparation.html">emi1d.data_preparation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="emi1d.inversion.html">emi1d.inversion package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">emi1d.modeling package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="emi1d.visualization.html">emi1d.visualization package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="emi1d.html#module-emi1d">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">emi1d</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">emi1d</a></li>
+          <li class="breadcrumb-item"><a href="emi1d.html">emi1d package</a></li>
+      <li class="breadcrumb-item active">emi1d.modeling package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/emi1d.modeling.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="emi1d-modeling-package">
+<h1>emi1d.modeling package<a class="headerlink" href="#emi1d-modeling-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-emi1d.modeling.forward_models">
+<span id="emi1d-modeling-forward-models-module"></span><h2>emi1d.modeling.forward_models module<a class="headerlink" href="#module-emi1d.modeling.forward_models" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="emi1d.modeling.forward_models.calc_rho_app">
+<span class="sig-prename descclassname"><span class="pre">emi1d.modeling.forward_models.</span></span><span class="sig-name descname"><span class="pre">calc_rho_app</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hs_h0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/modeling/forward_models.html#calc_rho_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.modeling.forward_models.calc_rho_app" title="Link to this definition"></a></dt>
+<dd><p>This function computes the apparent resistivity given the
+Quadrature response (Q) of a half space subjected to a
+vertical magnetic dipole. The separation between the source
+and receiver coils is s. This computation is based on  the
+low-frequency approximation.</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>hs_h0<span class="classifier">float</span></dt><dd><p>Quadrature response measured at the receiver coil and
+expressed as the ratio of the secondary field to the
+primary field in parts per million (ppm).</p>
+</dd>
+<dt>s<span class="classifier">float</span></dt><dd><p>Distance between the source magnetic dipole and the receiver
+coil, in meters (m).</p>
+</dd>
+<dt>freq<span class="classifier">float</span></dt><dd><p>Frequency of the electromagnetic signal, in Hertz (Hz).</p>
+</dd>
+</dl>
+</section>
+<section id="returns">
+<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>rho_app<span class="classifier">float</span></dt><dd><p>Apparent resistivity in ohm-m.</p>
+</dd>
+</dl>
+</section>
+<section id="notes">
+<h3>Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h3>
+<p>The low-frequency approximation formula to calculate <span class="math notranslate nohighlight">\(\rho_{\mathrm{app}}\)</span> is:</p>
+<div class="math notranslate nohighlight">
+\[\sigma_{\mathrm{app}} = \frac{4}{2\pi \cdot f \cdot \mu_0 \cdot s^2} \cdot \frac{H_{\mathrm{s}}}{H_{0}}\]</div>
+<div class="math notranslate nohighlight">
+\[\rho_{\mathrm{app}} = 1 / \sigma_{\mathrm{app}}\]</div>
+<p>where:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(f\)</span> is the frequency,</p></li>
+<li><p><span class="math notranslate nohighlight">\(s\)</span> is the separation distance, and</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mu_0\)</span> is the magnetic permeability of free space</p></li>
+<li><p><span class="math notranslate nohighlight">\(H_{\mathrm{s}}\)</span> is the magnetic field at the receiver coil</p></li>
+<li><p><span class="math notranslate nohighlight">\(H_0\)</span> is the free-space magnetic field at the receiver coil</p></li>
+<li><p><span class="math notranslate nohighlight">\(\sigma_{\mathrm{app}}\)</span> is the electrical conductivity.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\rho_{\mathrm{app}}\)</span> is the electrical resisitivity.</p></li>
+</ul>
+</section>
+<section id="references">
+<h3>References<a class="headerlink" href="#references" title="Link to this heading"></a></h3>
+<p>McNeill, 1980 Electromagnetic Terrain Conductivity Measurement at
+Low Induction Numbers. Geonics Ltd.(Technical Note TN-6)</p>
+</section>
+<section id="examples">
+<h3>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h3>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">calc_rho_app</span><span class="p">(</span><span class="mi">10000</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9000</span><span class="p">)</span>
+<span class="go">113.6978427005494</span>
+</pre></div>
+</div>
+</section>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="emi1d.modeling.forward_models.emi_fop">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">emi1d.modeling.forward_models.</span></span><span class="sig-name descname"><span class="pre">emi_fop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">h</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_hcp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_prp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freqs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.03</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/modeling/forward_models.html#emi_fop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.modeling.forward_models.emi_fop" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Forward operator class for electromagnetic induction</p>
+<section id="id1">
+<h3>Parameters<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>h<span class="classifier">float</span></dt><dd><p>Height of the source and receiver coils with respect to ground level.
+This is a positive number.</p>
+</dd>
+<dt>s_hcp<span class="classifier">list</span></dt><dd><p>List of source/receiver distances for the hcp coils</p>
+</dd>
+<dt>s_prp<span class="classifier">list</span></dt><dd><p>List of source/receiver distances for the prp coils</p>
+</dd>
+<dt>freqs<span class="classifier">list</span></dt><dd><p>List of frequencies for the forward model in Hertz</p>
+</dd>
+<dt>nlay: int</dt><dd><p>Number of layers (excluding the air layer)</p>
+</dd>
+<dt>dz<span class="classifier">float</span></dt><dd><p>Cell size of the forward modeling grid.</p>
+</dd>
+<dt>step: float</dt><dd><p>Step for the Hankel Transform (default 0.03). The smaller
+the step, the slower the forward model.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.modeling.forward_models.emi_fop.f_r_over_r">
+<span class="sig-name descname"><span class="pre">f_r_over_r</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lambda_EM</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/modeling/forward_models.html#emi_fop.f_r_over_r"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.modeling.forward_models.emi_fop.f_r_over_r" title="Link to this definition"></a></dt>
+<dd><p>Method to compute the transverse electric reflection coefficient
+<span class="math notranslate nohighlight">\(r_{\mathrm{TE}}\)</span> times <span class="math notranslate nohighlight">\(exp{(-2\lambda h)}\)</span> given a
+wavenumber. This quantity appears in the integral to solve
+<span class="math notranslate nohighlight">\(H_s/H_p\)</span> for both HCP and PRP configurations.</p>
+<section id="id2">
+<h4>Parameters<a class="headerlink" href="#id2" title="Link to this heading"></a></h4>
+<dl class="simple">
+<dt>lambda_EM: float</dt><dd><p>Wavenumber</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.modeling.forward_models.emi_fop.make_grid">
+<span class="sig-name descname"><span class="pre">make_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nlay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/modeling/forward_models.html#emi_fop.make_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.modeling.forward_models.emi_fop.make_grid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.modeling.forward_models.emi_fop.print_grid">
+<span class="sig-name descname"><span class="pre">print_grid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/modeling/forward_models.html#emi_fop.print_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.modeling.forward_models.emi_fop.print_grid" title="Link to this definition"></a></dt>
+<dd><p>Function to visualize the model grid and associated properties</p>
+<section id="id3">
+<h4>Parameters<a class="headerlink" href="#id3" title="Link to this heading"></a></h4>
+<p>model: numpy.array</p>
+<dl class="simple">
+<dt>Returns</dt><dd><p>Prints an schematic of the grid and associated properties</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.modeling.forward_models.emi_fop.response">
+<span class="sig-name descname"><span class="pre">response</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/modeling/forward_models.html#emi_fop.response"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.modeling.forward_models.emi_fop.response" title="Link to this definition"></a></dt>
+<dd><p>Method to compute the response <span class="math notranslate nohighlight">\(H_{\mathrm{s}}/H_{\mathrm{p}}\)</span>
+This method compute this integral for HCP
+add equation
+and this integral for the PRP
+add equation</p>
+<section id="id4">
+<h4>Parameters<a class="headerlink" href="#id4" title="Link to this heading"></a></h4>
+<dl class="simple">
+<dt>model: numpy.array</dt><dd><p>Electrical resistivity values associated to the modeling grid
+The first element of the model array represents the
+bottom-most layer.</p>
+</dd>
+</dl>
+</section>
+<section id="return">
+<h4>Return<a class="headerlink" href="#return" title="Link to this heading"></a></h4>
+<dl class="simple">
+<dt>fop_resp: dict</dt><dd><p>Dictionary whose items contain the responses
+<span class="math notranslate nohighlight">\(H_{\mathrm{s}}/H_{\mathrm{p}}\)</span>, and
+whose keys represent the metadata of the response. For example:</p>
+<ul class="simple">
+<li><p>Q_HCP_9000_1.0: Quadrature HCP response at 9000 Hz and 1.0 meter source-receiver separation</p></li>
+<li><p>I_PRP_9000_1.0: Inphase PRP response at 9000 Hz and 1.0 meter source-receiver separation</p></li>
+<li><p>etc</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="id5">
+<h4>Notes<a class="headerlink" href="#id5" title="Link to this heading"></a></h4>
+<p>The HCP response is the result of computing the integral
+(Equation 4.46 Ward, 1988) divided by <span class="math notranslate nohighlight">\(4 \pi \rho^3\)</span></p>
+<div class="math notranslate nohighlight">
+\[\frac{H_{\mathrm{s_{HCP}}}}{H_{\mathrm{p}}} = s_\mathrm{HCP}^3 \int_{0}^{\infty} r_\mathrm{TE} e^{-2\lambda h}\lambda^2 \mathrm{J}_0(\lambda s)\mathrm{d}\lambda.\]</div>
+<p>Meanwhile, the PRP response is the result of computing the integral
+(Equation 4.45 Ward, 1988) divided by <span class="math notranslate nohighlight">\(4 \pi \rho^3\)</span></p>
+<div class="math notranslate nohighlight">
+\[\frac{H_\mathrm{s_\mathrm{PRP}}}{H_\mathrm{p}} = s_{PRP}^3 \int_{0}^{\infty} r_\mathrm{TE} e^{-2\lambda h}\lambda^2 \mathrm{J}_1(\lambda s)\mathrm{d}\lambda.\]</div>
+</section>
+<section id="id6">
+<h4>References<a class="headerlink" href="#id6" title="Link to this heading"></a></h4>
+<p>Ward, Stanley H., and Gerald W. Hohmann. 1988. “4. Electromagnetic
+Theory for Geo-physical Applications.” 1. <a class="reference external" href="https://doi.org/10.1190/1.9781560802631.ch4">https://doi.org/10.1190/1.9781560802631.ch4</a></p>
+</section>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+<section id="module-emi1d.modeling">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-emi1d.modeling" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="emi1d.inversion.html" class="btn btn-neutral float-left" title="emi1d.inversion package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="emi1d.visualization.html" class="btn btn-neutral float-right" title="emi1d.visualization package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Juan Chavez Olalla.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
