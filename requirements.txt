@@ -5,7 +5,6 @@ charset-normalizer==3.3.2
 contourpy==1.2.0
 cycler==0.12.1
 docutils==0.20.1
--e git+https://github.com/jc-olalla/emi1d@8b65dcc8ff87cebfba8da65660467b910c8f2c76#egg=emi1d
 fonttools==4.50.0
 hankel==1.2.2
 idna==3.6
