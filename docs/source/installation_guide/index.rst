@@ -1,6 +1,7 @@
 Installation guide
 ==================
 Create a virtual environment
+
 .. code-block:: bash
 
     # Create a virtual environment with Python 3.10
@@ -15,6 +16,7 @@ Activate the virtual environment
 
 
 Clone the repository and install
+
 .. code-block:: bash
 
     # Clone the repository
