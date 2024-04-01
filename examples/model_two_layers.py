@@ -1,5 +1,4 @@
 import numpy as np
-
 from emi1d.modeling import forward_models as fwd
 
 # Input arguments
