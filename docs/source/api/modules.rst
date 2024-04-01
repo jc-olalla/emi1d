@@ -1,5 +1,5 @@
-emi1d
-=====
+API reference
+=============
 
 .. toctree::
    :maxdepth: 4
