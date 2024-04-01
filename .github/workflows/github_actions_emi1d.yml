@@ -44,6 +44,8 @@ jobs:
           cd docs/
           make html
       - name: Run ghp-import
+        env:
+          EMISECRET: ${{ secrets.EMISECRET }}
         run: | 
           ghp-import -n -p -f docs/build/html
 
