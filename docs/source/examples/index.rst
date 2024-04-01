@@ -6,7 +6,8 @@ to invert, and to plot inversion results a.k.a. tomograms.
 .. toctree::
   :maxdepth: 1
 
-  forward_model_example 
+  forward_model_one_layer 
+  forward_model_two_layers 
   inversion_example
   plot_example
 

@@ -1,2 +1,0 @@
-Forward modeling example 
-========================
