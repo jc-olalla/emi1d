@@ -29,7 +29,7 @@ def get_single_metadata(meta_str, only_sfreq=False):
     if only_sfreq:
         s_freq = {key: value for key, value in meta_dict.items() if key in ['s', 'freq']}
         return s_freq
-    else
+    else:
         return meta_dict
 
 def linear_error(freq, slope=0.02):
