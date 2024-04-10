@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emi1d.modeling.forward_models &mdash; emi1d 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=7026087e"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            emi1d
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide/index.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">emi1d</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">emi1d.modeling.forward_models</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for emi1d.modeling.forward_models</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">hankel</span> <span class="kn">import</span> <span class="n">HankelTransform</span>
+
+
+<div class="viewcode-block" id="calc_rho_app">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.calc_rho_app">[docs]</a>
+<span class="k">def</span> <span class="nf">calc_rho_app</span><span class="p">(</span><span class="n">hs_h0</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">freq</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function computes the apparent resistivity given the</span>
+<span class="sd">    Quadrature response (Q) of a half space subjected to a</span>
+<span class="sd">    vertical magnetic dipole. The separation between the source</span>
+<span class="sd">    and receiver coils is s. This computation is based on  the</span>
+<span class="sd">    low-frequency approximation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    hs_h0 : float</span>
+<span class="sd">        Quadrature response measured at the receiver coil and</span>
+<span class="sd">        expressed as the ratio of the secondary field to the</span>
+<span class="sd">        primary field in parts per million (ppm).</span>
+
+<span class="sd">    s : float</span>
+<span class="sd">        Distance between the source magnetic dipole and the receiver</span>
+<span class="sd">        coil, in meters (m).</span>
+
+<span class="sd">    freq : float</span>
+<span class="sd">        Frequency of the electromagnetic signal, in Hertz (Hz).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    rho_app : float</span>
+<span class="sd">        Apparent resistivity in ohm-m.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The low-frequency approximation formula to calculate :math:`\\rho_{\mathrm{app}}` is:</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \sigma_{\mathrm{app}} = \\frac{4}{2\pi \cdot f \cdot \mu_0 \cdot s^2} \cdot \\frac{H_{\mathrm{s}}}{H_{0}}</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        \\rho_{\mathrm{app}} = 1 / \sigma_{\mathrm{app}}</span>
+
+
+<span class="sd">    where:</span>
+
+<span class="sd">    - :math:`f` is the frequency,</span>
+<span class="sd">    - :math:`s` is the separation distance, and</span>
+<span class="sd">    - :math:`\mu_0` is the magnetic permeability of free space</span>
+<span class="sd">    - :math:`H_{\mathrm{s}}` is the magnetic field at the receiver coil</span>
+<span class="sd">    - :math:`H_0` is the free-space magnetic field at the receiver coil</span>
+<span class="sd">    - :math:`\sigma_{\mathrm{app}}` is the electrical conductivity.</span>
+<span class="sd">    - :math:`\\rho_{\mathrm{app}}` is the electrical resisitivity.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    McNeill, 1980 Electromagnetic Terrain Conductivity Measurement at</span>
+<span class="sd">    Low Induction Numbers. Geonics Ltd.(Technical Note TN-6)</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; calc_rho_app(10000, 8, 9000)</span>
+<span class="sd">    113.6978427005494</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">u0</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">1e-7</span>
+    <span class="n">sigma_app</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">hs_h0</span> <span class="o">*</span> <span class="mf">1e-6</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq</span> <span class="o">*</span> <span class="n">u0</span> <span class="o">*</span> <span class="n">s</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">sigma_app</span></div>
+
+
+
+<div class="viewcode-block" id="dataframe_modeling">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.dataframe_modeling">[docs]</a>
+<span class="k">class</span> <span class="nc">dataframe_modeling</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">():</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="dataframe_modeling.initialize_modeling_from_dataframe_headers">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.dataframe_modeling.initialize_modeling_from_dataframe_headers">[docs]</a>
+    <span class="k">def</span> <span class="nf">initialize_modeling_from_dataframe_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+<div class="viewcode-block" id="emi1d_forward">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.emi1d_forward">[docs]</a>
+<span class="k">class</span> <span class="nc">emi1d_forward</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Forward operator class for electromagnetic induction</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    h : float</span>
+<span class="sd">        Height of the source and receiver coils with respect to ground level.</span>
+<span class="sd">        This is a positive number.</span>
+<span class="sd">    s_hcp : list</span>
+<span class="sd">        List of source/receiver distances for the hcp coils</span>
+<span class="sd">    s_prp : list</span>
+<span class="sd">        List of source/receiver distances for the prp coils</span>
+<span class="sd">    freqs : list</span>
+<span class="sd">        List of frequencies for the forward model in Hertz</span>
+<span class="sd">    nlay: int</span>
+<span class="sd">        Number of layers (excluding the air layer)</span>
+<span class="sd">    dz : float</span>
+<span class="sd">        Cell size of the forward modeling grid.</span>
+<span class="sd">    step: float</span>
+<span class="sd">        Step for the Hankel Transform (default 0.03). The smaller</span>
+<span class="sd">        the step, the slower the forward model.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span> 
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">s_hcp</span><span class="p">,</span> <span class="n">s_prp</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">nlay</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mf">0.03</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">h</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">s_hcp</span><span class="p">)</span>  <span class="c1"># coil spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">s_prp</span><span class="p">)</span>  <span class="c1"># coil spacing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freqs</span> <span class="o">=</span> <span class="n">freqs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_grid</span><span class="p">(</span><span class="n">nlay</span><span class="p">,</span> <span class="n">dz</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="o">-</span><span class="mi">7</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ht_hcp</span> <span class="o">=</span> <span class="n">HankelTransform</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ht_prp</span> <span class="o">=</span> <span class="n">HankelTransform</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+<div class="viewcode-block" id="emi1d_forward.make_grid">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.emi1d_forward.make_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nlay</span><span class="p">,</span> <span class="n">dz</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span> <span class="o">=</span> <span class="n">nlay</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span> <span class="o">=</span> <span class="n">dz</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">nlay</span><span class="p">,</span> <span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="emi1d_forward.print_grid">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.emi1d_forward.print_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">print_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to visualize the model grid and associated properties</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model: numpy.array</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">            Prints an schematic of the grid and associated properties</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">z_cum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;            Ground level&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-------------------------------------z=0 m&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">dz_i</span><span class="p">,</span> <span class="n">model_i</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span><span class="p">),</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">model</span><span class="p">))):</span>
+            <span class="n">z_cum</span> <span class="o">+=</span> <span class="n">dz_i</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;        </span><span class="si">{</span><span class="n">model_i</span><span class="si">}</span><span class="s1"> ohm-m   dz=</span><span class="si">{</span><span class="n">dz_i</span><span class="si">}</span><span class="s1"> m&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;-------------------------------------z=</span><span class="si">{</span><span class="n">z_cum</span><span class="si">}</span><span class="s1"> m&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;        </span><span class="si">{</span><span class="n">model_i</span><span class="si">}</span><span class="s1"> ohm-m   dz=infinite&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-------------------------------------z= infinite&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="emi1d_forward.f_r_over_r">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.emi1d_forward.f_r_over_r">[docs]</a>
+    <span class="k">def</span> <span class="nf">f_r_over_r</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lambda_EM</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to compute the transverse electric reflection coefficient</span>
+<span class="sd">        :math:`r_{\mathrm{TE}}` times :math:`exp{(-2\lambda h)}` given a</span>
+<span class="sd">        wavenumber. This quantity appears in the integral to solve</span>
+<span class="sd">        :math:`H_s/H_p` for both HCP and PRP configurations.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lambda_EM: float</span>
+<span class="sd">            Wavenumber</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">k_N</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+        <span class="n">u_cap_N</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">k_N</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>  <span class="c1"># N: nlay</span>
+        <span class="n">u_cap_n</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># n: nlay - 1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">):</span>
+            <span class="n">k_n</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">u0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">u_n</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">k_n</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">numerator</span> <span class="o">=</span> <span class="n">u_cap_N</span> <span class="o">+</span> <span class="n">u_n</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">u_n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">denominator</span> <span class="o">=</span> <span class="n">u_n</span> <span class="o">+</span> <span class="n">u_cap_N</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">u_n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dzIN</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">u_cap_n</span> <span class="o">=</span> <span class="n">u_n</span> <span class="o">*</span> <span class="n">numerator</span> <span class="o">/</span> <span class="n">denominator</span>
+            <span class="n">u_cap_N</span> <span class="o">=</span> <span class="n">u_cap_n</span>
+
+        <span class="n">rTE</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">-</span> <span class="n">u_cap_N</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">lambda_EM</span> <span class="o">+</span> <span class="n">u_cap_N</span><span class="p">)</span>
+        <span class="n">f_x</span> <span class="o">=</span> <span class="n">rTE</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">lambda_EM</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">)</span> <span class="o">*</span> <span class="n">lambda_EM</span>
+
+        <span class="k">return</span> <span class="n">f_x</span></div>
+
+
+<div class="viewcode-block" id="emi1d_forward.response">
+<a class="viewcode-back" href="../../../api/emi1d.modeling.html#emi1d.modeling.forward_models.emi1d_forward.response">[docs]</a>
+    <span class="k">def</span> <span class="nf">response</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to compute the response :math:`H_{\mathrm{s}}/H_{\mathrm{p}}`</span>
+<span class="sd">        This method compute this integral for HCP</span>
+<span class="sd">        add equation</span>
+<span class="sd">        and this integral for the PRP</span>
+<span class="sd">        add equation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model: numpy.array</span>
+<span class="sd">            Electrical resistivity values associated to the modeling grid</span>
+<span class="sd">            The first element of the model array represents the</span>
+<span class="sd">            bottom-most layer.</span>
+
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        fop_resp: dict</span>
+<span class="sd">            Dictionary whose items contain the responses</span>
+<span class="sd">            :math:`H_{\mathrm{s}}/H_{\mathrm{p}}`, and</span>
+<span class="sd">            whose keys represent the metadata of the response. For example:</span>
+
+<span class="sd">            * Q_HCP_9000_1.0: Quadrature HCP response at 9000 Hz and 1.0 meter source-receiver separation</span>
+<span class="sd">            * I_PRP_9000_1.0: Inphase PRP response at 9000 Hz and 1.0 meter source-receiver separation</span>
+<span class="sd">            * etc</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The HCP response is the result of computing the integral</span>
+<span class="sd">        (Equation 4.46 Ward, 1988) divided by :math:`4 \pi \\rho^3`</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \\frac{H_{\mathrm{s_{HCP}}}}{H_{\mathrm{p}}} = s_\mathrm{HCP}^3 \int_{0}^{\infty} r_\mathrm{TE} e^{-2\lambda h}\lambda^2 \mathrm{J}_0(\lambda s)\mathrm{d}\lambda.</span>
+
+<span class="sd">        Meanwhile, the PRP response is the result of computing the integral</span>
+<span class="sd">        (Equation 4.45 Ward, 1988) divided by :math:`4 \pi \\rho^3`</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \\frac{H_\mathrm{s_\mathrm{PRP}}}{H_\mathrm{p}} = s_{PRP}^3 \int_{0}^{\infty} r_\mathrm{TE} e^{-2\lambda h}\lambda^2 \mathrm{J}_1(\lambda s)\mathrm{d}\lambda.</span>
+
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Ward, Stanley H., and Gerald W. Hohmann. 1988. “4. Electromagnetic</span>
+<span class="sd">        Theory for Geo-physical Applications.” 1. https://doi.org/10.1190/1.9781560802631.ch4</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">model</span>  <span class="c1"># resistivity to conductivity</span>
+        <span class="n">fop_resp</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">freq_i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">freqs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">freq_i</span>
+            <span class="c1"># HCP</span>
+            <span class="k">for</span> <span class="n">s_i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_HCP</span><span class="p">:</span>
+                <span class="c1"># Hz equation 4.46 Ward / (4*pi*rho**3)</span>
+                <span class="n">ht_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ht_hcp</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>  <span class="c1"># Hankel transform</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">f_r_over_r</span><span class="p">,</span>
+                    <span class="n">s_i</span><span class="p">,</span>
+                    <span class="n">ret_err</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+                <span class="n">Q_hsv_h0</span> <span class="o">=</span> <span class="p">(</span><span class="n">s_i</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">ht_i</span><span class="p">)</span>  <span class="c1"># v: vertical</span>
+                <span class="n">I_hsv_h0</span> <span class="o">=</span> <span class="p">(</span><span class="n">s_i</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">ht_i</span><span class="p">)</span>  <span class="c1"># v: vertical</span>
+
+                <span class="c1"># Save results into dictionary</span>
+                <span class="n">header_qv</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Q_HCP_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">freq_i</span><span class="p">)</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">s_i</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">header_iv</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;I_HCP_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">freq_i</span><span class="p">)</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">s_i</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">fop_resp</span><span class="p">[</span><span class="n">header_qv</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">Q_hsv_h0</span> <span class="o">*</span> <span class="mf">1e6</span>
+                <span class="n">fop_resp</span><span class="p">[</span><span class="n">header_iv</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">I_hsv_h0</span> <span class="o">*</span> <span class="mf">1e6</span>
+
+            <span class="c1"># PRP</span>
+            <span class="k">for</span> <span class="n">s_i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coilspacing_PRP</span><span class="p">:</span>
+                <span class="c1"># Hrho equation 4.45 Ward / (4*pi*rho**3)</span>
+                <span class="n">ht_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ht_prp</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>  <span class="c1"># Hankel tranform</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">f_r_over_r</span><span class="p">,</span>
+                    <span class="n">s_i</span><span class="p">,</span>
+                    <span class="n">ret_err</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+                <span class="n">Q_hsr_h0</span> <span class="o">=</span> <span class="p">(</span><span class="n">s_i</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span><span class="n">ht_i</span><span class="p">)</span>  <span class="c1"># r: radial</span>
+                <span class="n">I_hsr_h0</span> <span class="o">=</span> <span class="p">(</span><span class="n">s_i</span> <span class="o">**</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">ht_i</span><span class="p">)</span>  <span class="c1"># r:radial</span>
+
+                <span class="c1"># Save results into dictionary</span>
+                <span class="n">header_qr</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Q_PRP_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">freq_i</span><span class="p">)</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">s_i</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">header_ir</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;I_PRP_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">freq_i</span><span class="p">)</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">s_i</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">fop_resp</span><span class="p">[</span><span class="n">header_qr</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">Q_hsr_h0</span> <span class="o">*</span> <span class="mf">1e6</span>
+                <span class="n">fop_resp</span><span class="p">[</span><span class="n">header_ir</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">I_hsr_h0</span> <span class="o">*</span> <span class="mf">1e6</span>
+
+        <span class="k">return</span> <span class="n">fop_resp</span></div>
+</div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Juan Chavez Olalla.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

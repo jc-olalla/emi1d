@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emi1d.inversion.inversion_methods &mdash; emi1d 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=7026087e"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            emi1d
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation_guide/index.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/modules.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">emi1d</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">emi1d.inversion.inversion_methods</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for emi1d.inversion.inversion_methods</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.integrate</span> <span class="k">as</span> <span class="nn">integrate</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">from</span> <span class="nn">emi1d.modeling.forward_models</span> <span class="kn">import</span> <span class="n">calc_rho_app</span>
+<span class="kn">from</span> <span class="nn">emi1d.data_preparation.utils</span> <span class="kn">import</span> <span class="n">get_single_metadata</span><span class="p">,</span> <span class="n">make_regular_grid</span>
+
+
+<div class="viewcode-block" id="dataframe_inversion">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.dataframe_inversion">[docs]</a>
+<span class="k">class</span> <span class="nc">dataframe_inversion</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="emi1d_invert">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert">[docs]</a>
+<span class="k">class</span> <span class="nc">emi1d_invert</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fop</span><span class="p">,</span> <span class="n">dz</span><span class="p">,</span> <span class="n">nlay</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">lambda_reg</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">rel_noise</span><span class="o">=</span><span class="mf">0.05</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fop</span> <span class="o">=</span> <span class="n">fop</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_reg</span> <span class="o">=</span> <span class="n">lambda_reg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rel_noise</span> <span class="o">=</span> <span class="n">rel_noise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="n">dz</span>  <span class="c1"># for inversion grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span> <span class="o">=</span> <span class="n">nlay</span>  <span class="c1"># for inversion grid</span>
+
+<div class="viewcode-block" id="emi1d_invert.invert">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.invert">[docs]</a>
+    <span class="k">def</span> <span class="nf">invert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to invert the observed emi1d data</span>
+<span class="sd">        observed_data: dict</span>
+<span class="sd">            Dictionary whose items contain the responses</span>
+<span class="sd">            :math:`H_{\mathrm{s}}/H_{\mathrm{p}}`, and</span>
+<span class="sd">            whose keys represent the metadata of the response. For example:</span>
+
+<span class="sd">            * Q_HCP_9000_1.0: Quadrature HCP response at 9000 Hz and 1.0 meter source-receiver separation</span>
+<span class="sd">            * I_PRP_9000_1.0: Inphase PRP response at 9000 Hz and 1.0 meter source-receiver separation</span>
+<span class="sd">            * etc</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+        <span class="c1"># Step 1: Initialize the model based on the observed data</span>
+        <span class="n">initial_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model</span><span class="p">(</span><span class="n">observed_data</span><span class="p">)</span>
+
+        <span class="c1"># Step 2: Construct the error matrix</span>
+        <span class="n">error_vector</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;rel_noise&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">initial_model</span><span class="p">)</span>
+
+        <span class="c1"># Step 3: Construct the regularization matrix</span>
+        <span class="n">regularization_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">construct_regularization_matrix</span><span class="p">(</span><span class="n">initial_model</span><span class="p">)</span>
+
+        <span class="c1"># Step 4: Build the objective function</span>
+        <span class="n">objective_function</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective_function</span><span class="p">(</span><span class="n">error_vector</span><span class="p">,</span> <span class="n">regularization_matrix</span><span class="p">,</span> <span class="n">initial_model</span><span class="p">)</span>
+
+        <span class="c1"># Step 5: Minimize the objective function (inversion)</span>
+        <span class="n">inverted_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimize_objective_function</span><span class="p">(</span><span class="n">objective_function</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inverted_parameters</span></div>
+
+
+<div class="viewcode-block" id="emi1d_invert.make_grid">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.make_grid">[docs]</a>
+    <span class="k">def</span> <span class="nf">make_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dz</span> <span class="o">=</span> <span class="n">make_regular_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="emi1d_invert.get_metadata">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.get_metadata">[docs]</a>
+    <span class="k">def</span> <span class="nf">get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed_data</span><span class="p">):</span>
+        <span class="n">meas_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Extracting metadata and observed data separately</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">observation</span> <span class="ow">in</span> <span class="n">observed_data</span><span class="p">:</span>
+            <span class="n">meta_dict_i</span> <span class="o">=</span> <span class="n">get_single_metadata</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">metadata</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta_dict_i</span><span class="p">)</span>
+            <span class="n">meas_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">observation</span><span class="p">)</span>
+
+        <span class="c1"># Transpose list of dictionaries into a dictionary of lists</span>
+        <span class="n">dict_meas</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+        <span class="n">dict_meas</span><span class="p">[</span><span class="s1">&#39;measured_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meas_data</span>
+
+        <span class="c1"># Add noise</span>
+        <span class="n">dict_meas</span><span class="p">[</span><span class="s1">&#39;rel_noise&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rel_noise</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">dict_meas</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="emi1d_invert.initialize_model">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.initialize_model">[docs]</a>
+    <span class="k">def</span> <span class="nf">initialize_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observed_data</span><span class="p">):</span>
+        <span class="n">df_meas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_metadata</span><span class="p">(</span><span class="n">observed_data</span><span class="p">)</span>
+        <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;rho_app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span>
+            <span class="n">calc_rho_app</span><span class="p">,</span>
+            <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;measured_data&#39;</span><span class="p">],</span>
+            <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">],</span>
+            <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;freq&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;sigma_app&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;rho_app&#39;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">df_meas</span> <span class="o">=</span> <span class="n">df_meas</span>
+
+        <span class="n">model_ini</span> <span class="o">=</span> <span class="n">df_meas</span><span class="p">[</span><span class="s1">&#39;sigma_app&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model_ini</span></div>
+
+
+
+<div class="viewcode-block" id="emi1d_invert.construct_regularization_matrix">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.construct_regularization_matrix">[docs]</a>
+    <span class="k">def</span> <span class="nf">construct_regularization_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regularization_type</span><span class="o">=</span><span class="s2">&quot;smooth&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Regularization matrix</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regularization_type: str</span>
+<span class="sd">            Regularization type &#39;smooth&#39; or &#39;identity&#39;.</span>
+<span class="sd">            Smooth regularization creates a second derivative matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">regularization_type</span> <span class="o">==</span> <span class="s1">&#39;smooth&#39;</span><span class="p">:</span>
+            <span class="n">C_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">))</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">C_m</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="n">C_m</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">C_m</span> <span class="o">=</span> <span class="n">C_m</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dz</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">regularization_type</span> <span class="o">==</span> <span class="s1">&#39;identity&#39;</span><span class="p">:</span>
+            <span class="n">C_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">C_m</span></div>
+
+
+<div class="viewcode-block" id="emi1d_invert.objective_function">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.objective_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">objective_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_model_values</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">relnoise</span><span class="p">,</span> <span class="n">log_ini_model</span><span class="p">,</span> <span class="n">lambda_reg</span><span class="p">,</span> <span class="n">Cm</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Objective function to be minimized in the inversion process.</span>
+<span class="sd">        The objective function has two components the data functional,</span>
+<span class="sd">        and the regularization term</span>
+<span class="sd">        :math:`\Phi = \Phi_{\mathrm{d}} + \lambda \Phi_{\mathrm{g}}`</span>
+<span class="sd">        The data functional </span>
+<span class="sd">        :math:`\Phi_\mathrm{d} = (\\underline{d}-f(\\underline{g}))^\mathrm{T}\\underline{\\underline{D}}^\mathrm{T}\\underline{\\underline{D}}(\\underline{d}-f(\\underline{g}))`</span>
+
+<span class="sd">        The regularization term</span>
+<span class="sd">        :math:`\Phi_\mathrm{g} = (\\underline{g} - \\underline{g}_{\mathrm{ref}})^\mathrm{T}\\underline{\\underline{C}}^\mathrm{T}\\underline{\\underline{C}}(\\underline{g} - \\underline{g}_{\mathrm{ref}})`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_model_values</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">model_values</span><span class="p">)</span>
+        <span class="n">log_resp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">resp</span><span class="p">))</span>  <span class="c1"># negative values are physically possible</span>
+        <span class="n">log_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>  <span class="c1"># negative values are physically possible</span>
+
+        <span class="n">phi_d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(((</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">relnoise</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">*</span> <span class="p">(</span><span class="n">log_d</span> <span class="o">-</span> <span class="n">log_resp</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">phi_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lambda_reg</span> <span class="o">*</span> <span class="p">(</span><span class="n">log_model_values</span> <span class="o">-</span> <span class="n">log_ini_model</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Cm</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Cm</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">((</span><span class="n">log_model_values</span> <span class="o">-</span> <span class="n">log_ini_model</span><span class="p">)))</span>
+
+        <span class="n">phi</span> <span class="o">=</span> <span class="n">phi_d</span> <span class="o">+</span> <span class="n">phi_m</span>
+
+        <span class="k">return</span> <span class="n">phi</span></div>
+
+
+<div class="viewcode-block" id="emi1d_invert.minimize_objective_function">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.minimize_objective_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">minimize_objective_function</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="emi1d_invert.run_inversion">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.run_inversion">[docs]</a>
+    <span class="k">def</span> <span class="nf">run_inversion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="kn">import</span> <span class="nn">multiprocessing</span>
+        <span class="n">pool_obj</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">()</span>
+        <span class="n">list_of_inv_model</span> <span class="o">=</span> <span class="n">pool_obj</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loop_function</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">))</span>
+        <span class="n">RHO_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">nlay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">rho_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">list_of_inv_model</span><span class="p">):</span>
+            <span class="n">RHO_grid</span><span class="p">[:,</span> <span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">rho_i</span>
+
+        <span class="k">for</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;HCP&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;_inv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;PRP&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;_inv&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="c1">#RHO_grid[:, pi] = 1.0 / inv_model</span>
+
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Elapased time&#39;</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RHO_grid</span></div>
+
+
+
+<div class="viewcode-block" id="emi1d_invert.loop_function">
+<a class="viewcode-back" href="../../../api/emi1d.inversion.html#emi1d.inversion.inversion_methods.emi1d_invert.loop_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">loop_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pi</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Point </span><span class="si">%5d</span><span class="s1"> out of </span><span class="si">%5d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">pi</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">npoints</span><span class="p">))</span>
+        <span class="c1"># Initial response</span>
+        <span class="n">ini_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_grid</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_ini</span><span class="p">[</span><span class="n">pi</span><span class="p">]</span>
+        <span class="n">ini_resp_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">ini_model</span><span class="p">)</span>
+        <span class="n">log_ini_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">ini_model</span><span class="p">)</span>
+
+        <span class="c1"># Assemble &quot;d&quot; vector (Measured response)</span>
+        <span class="n">d_array_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">ndata</span><span class="p">,))</span>
+        <span class="n">rel_noise_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">ndata</span><span class="p">,))</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i_dist</span><span class="p">,</span> <span class="n">sepi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sep_content</span><span class="p">):</span>
+            <span class="n">head_Q_HCP_i</span> <span class="o">=</span> <span class="s1">&#39;Q_HCP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+            <span class="n">head_I_HCP_i</span> <span class="o">=</span> <span class="s1">&#39;I_HCP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+            <span class="n">head_Q_PRP_i</span> <span class="o">=</span> <span class="s1">&#39;Q_PRP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+            <span class="n">head_I_PRP_i</span> <span class="o">=</span> <span class="s1">&#39;I_PRP_&#39;</span> <span class="o">+</span> <span class="n">sepi</span> <span class="o">+</span> <span class="s1">&#39;m&#39;</span>
+
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_Q_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_I_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_Q_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">d_array_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="n">head_I_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_Q_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_I_HCP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_Q_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+            <span class="n">rel_noise_i</span><span class="p">[</span><span class="n">i_dist</span><span class="o">*</span><span class="mi">4</span><span class="o">+</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;relnoise_&#39;</span> <span class="o">+</span> <span class="n">head_I_PRP_i</span><span class="p">][</span><span class="n">pi</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">d_i</span> <span class="o">=</span> <span class="n">d_array_i</span>
+
+        <span class="c1"># Assemble &quot;C&quot; matrix</span>
+        <span class="n">C_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_matrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dzN</span><span class="p">,</span> <span class="n">C_m_type</span><span class="o">=</span><span class="s1">&#39;smooth&#39;</span><span class="p">)</span>  <span class="c1"># (smoothness matrix)</span>
+
+        <span class="c1"># Inversion</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Measured response &#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">d_array_i</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Initial response &#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ini_resp_i</span><span class="p">)</span>
+
+        <span class="c1"># invEM = minimize(objective_function, log_ini_model, method=&quot;Newton-CG&quot;, jac=jacobian_phi_brute_force, args=C_m, tol=1.0e-6)  #</span>
+        <span class="n">invEM</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">objective_function</span><span class="p">,</span> <span class="n">log_ini_model</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;CG&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">d_array_i</span><span class="p">,</span> <span class="n">rel_noise_i</span><span class="p">,</span> <span class="n">log_ini_model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_reg</span><span class="p">,</span> <span class="n">C_m</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">})</span>
+
+        <span class="n">inv_model</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">invEM</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># resistivity</span>
+        <span class="n">inv_resp_i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fop</span><span class="o">.</span><span class="n">response</span><span class="p">(</span><span class="n">inv_model</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inv_model</span></div>
+</div>
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Juan Chavez Olalla.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emi1d.inversion package &mdash; emi1d 0.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=7026087e"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="emi1d.data_preparation package" href="emi1d.data_preparation.html" />
+    <link rel="prev" title="emi1d.modeling package" href="emi1d.modeling.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            emi1d
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide/index.html">Installation guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="emi1d.html">emi1d package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="emi1d.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="emi1d.modeling.html">emi1d.modeling package</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">emi1d.inversion package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="emi1d.data_preparation.html">emi1d.data_preparation package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="emi1d.visualization.html">emi1d.visualization package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="emi1d.html#module-emi1d">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">emi1d</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">API reference</a></li>
+          <li class="breadcrumb-item"><a href="emi1d.html">emi1d package</a></li>
+      <li class="breadcrumb-item active">emi1d.inversion package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/emi1d.inversion.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="emi1d-inversion-package">
+<h1>emi1d.inversion package<a class="headerlink" href="#emi1d-inversion-package" title="Link to this heading"></a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-emi1d.inversion.inversion_methods">
+<span id="emi1d-inversion-inversion-methods-module"></span><h2>emi1d.inversion.inversion_methods module<a class="headerlink" href="#module-emi1d.inversion.inversion_methods" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.dataframe_inversion">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">emi1d.inversion.inversion_methods.</span></span><span class="sig-name descname"><span class="pre">dataframe_inversion</span></span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#dataframe_inversion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.dataframe_inversion" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">emi1d.inversion.inversion_methods.</span></span><span class="sig-name descname"><span class="pre">emi1d_invert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dz</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nlay</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_reg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rel_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.construct_regularization_matrix">
+<span class="sig-name descname"><span class="pre">construct_regularization_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regularization_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'smooth'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.construct_regularization_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.construct_regularization_matrix" title="Link to this definition"></a></dt>
+<dd><p>Regularization matrix</p>
+<section id="parameters">
+<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading"></a></h3>
+<dl class="simple">
+<dt>regularization_type: str</dt><dd><p>Regularization type ‘smooth’ or ‘identity’.
+Smooth regularization creates a second derivative matrix</p>
+</dd>
+</dl>
+</section>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.get_metadata">
+<span class="sig-name descname"><span class="pre">get_metadata</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.get_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.get_metadata" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.initialize_model">
+<span class="sig-name descname"><span class="pre">initialize_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.initialize_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.initialize_model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.invert">
+<span class="sig-name descname"><span class="pre">invert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">observed_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.invert"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.invert" title="Link to this definition"></a></dt>
+<dd><p>Function to invert the observed emi1d data
+observed_data: dict</p>
+<blockquote>
+<div><p>Dictionary whose items contain the responses
+<span class="math notranslate nohighlight">\(H_{\mathrm{s}}/H_{\mathrm{p}}\)</span>, and
+whose keys represent the metadata of the response. For example:</p>
+<ul class="simple">
+<li><p>Q_HCP_9000_1.0: Quadrature HCP response at 9000 Hz and 1.0 meter source-receiver separation</p></li>
+<li><p>I_PRP_9000_1.0: Inphase PRP response at 9000 Hz and 1.0 meter source-receiver separation</p></li>
+<li><p>etc</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.loop_function">
+<span class="sig-name descname"><span class="pre">loop_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pi</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.loop_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.loop_function" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.make_grid">
+<span class="sig-name descname"><span class="pre">make_grid</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.make_grid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.make_grid" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.minimize_objective_function">
+<span class="sig-name descname"><span class="pre">minimize_objective_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.minimize_objective_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.minimize_objective_function" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.objective_function">
+<span class="sig-name descname"><span class="pre">objective_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_model_values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">relnoise</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_ini_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_reg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Cm</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.objective_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.objective_function" title="Link to this definition"></a></dt>
+<dd><p>Objective function to be minimized in the inversion process.
+The objective function has two components the data functional,
+and the regularization term
+<span class="math notranslate nohighlight">\(\Phi = \Phi_{\mathrm{d}} + \lambda \Phi_{\mathrm{g}}\)</span>
+The data functional 
+<span class="math notranslate nohighlight">\(\Phi_\mathrm{d} = (\underline{d}-f(\underline{g}))^\mathrm{T}\underline{\underline{D}}^\mathrm{T}\underline{\underline{D}}(\underline{d}-f(\underline{g}))\)</span></p>
+<p>The regularization term
+<span class="math notranslate nohighlight">\(\Phi_\mathrm{g} = (\underline{g} - \underline{g}_{\mathrm{ref}})^\mathrm{T}\underline{\underline{C}}^\mathrm{T}\underline{\underline{C}}(\underline{g} - \underline{g}_{\mathrm{ref}})\)</span></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="emi1d.inversion.inversion_methods.emi1d_invert.run_inversion">
+<span class="sig-name descname"><span class="pre">run_inversion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/emi1d/inversion/inversion_methods.html#emi1d_invert.run_inversion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#emi1d.inversion.inversion_methods.emi1d_invert.run_inversion" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-emi1d.inversion">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-emi1d.inversion" title="Link to this heading"></a></h2>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="emi1d.modeling.html" class="btn btn-neutral float-left" title="emi1d.modeling package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="emi1d.data_preparation.html" class="btn btn-neutral float-right" title="emi1d.data_preparation package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Juan Chavez Olalla.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
