@@ -5,7 +5,7 @@ Create a virtual environment
 .. code-block:: bash
 
     # Create a virtual environment with Python 3.10
-    # It should work with other python versions
+    # It should work with other python versions (hoi)
     python3.10 -m venv emi1d  
 
 Activate the virtual environment
