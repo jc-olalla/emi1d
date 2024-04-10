@@ -76,7 +76,7 @@ def data_error(measurement, sigma_noise):
     return data_error
 
 def make_regular_grid(nlay, dz):
-    return = dz * np.ones((nlay, ))
+    return dz * np.ones((nlay, ))
 
 def make_irregular_grid(dz):
     pass

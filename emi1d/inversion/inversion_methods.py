@@ -32,7 +32,7 @@ class emi1d_invert():
             * Q_HCP_9000_1.0: Quadrature HCP response at 9000 Hz and 1.0 meter source-receiver separation
             * I_PRP_9000_1.0: Inphase PRP response at 9000 Hz and 1.0 meter source-receiver separation
             * etc
-        """
+            """
         # Step 1: Initialize the model based on the observed data
         initial_model = self.initialize_model(observed_data)
 
