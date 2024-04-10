@@ -11,7 +11,7 @@ s_prp = []  # source-receiver separation
 dz = 1.0  # dummy value because dz is infinite
 
 # Initialize modeling class
-fwd_model = fwd.emi_fop(
+fwd_model = fwd.emi1d_forward(
     h,
     s_hcp,
     s_prp,

@@ -11,7 +11,7 @@ s = [8]  # source-receiver separation
 dz = 0.0  # dummy value because dz is infinite
 
 # Initialize modeling class
-fwd_model = fwd.emi_fop(
+fwd_model = fwd.emi1d_forward(
     h,
     s,
     s,

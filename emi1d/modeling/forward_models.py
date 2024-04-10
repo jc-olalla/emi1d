@@ -67,7 +67,14 @@ def calc_rho_app(hs_h0, s, freq):
     return 1 / sigma_app
 
 
-class emi_fop():
+class dataframe_modeling:
+    def __init__():
+        pass
+
+    def initialize_modeling_from_dataframe_headers(self, dataframe):
+        pass
+
+class emi1d_forward():
     """
     Forward operator class for electromagnetic induction
 

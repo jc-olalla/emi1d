@@ -1,210 +1,126 @@
+import time
 import numpy as np
-# from scipy.special import jv as besselj
-from scipy.special import j0
-from scipy.special import j1
 import scipy.integrate as integrate
-from hankel import HankelTransform
 from scipy.optimize import minimize
 import pandas as pd
 from scipy.interpolate import interp1d
-import time
-import matplotlib.pyplot as plt
-
-def calc_epsilon_d(df):
-    """Function to calculate relative noise"""
-    headers = [i for i in df.columns if i.startswith('Q') or i.startswith('I')]
-    for head_i in headers:
-        print(head_i)
-        df['relnoise_' + head_i] = df['noise_abs'] / df[head_i]
-    return df
-
-def get_relnoise_vector(df, index):
-    headers = [i for i in df.columns if i.startswith('relnoise')]
-    relnoise = []
-    for head_i in headers:
-        relnoise.append(df[head_i][index])
-
-    return np.array(relnoise)
-
-def add_colorbar_method2(RHO_grid, fig, ax, plotmin=None, plotmax=None, title=None, sep=0.5, width=0.25):
-    # sep: separation of the color bar from the main ax in centimeters
-    # width: width of the color bar ax in centimeters
-
-    fig_dummy = plt.figure()
-    ax_dummy = fig_dummy.add_subplot(111)
-    im = ax_dummy.imshow(RHO_grid, cmap='jet', vmin=plotmin, vmax=plotmax)
-    # plt.close(fig=fig_dummy)  # this used to work before, now it doesn't (version change?)
-    plt.close(fig_dummy)
-
-    # bar ax
-    fig_size_cm = fig.get_size_inches() * 2.54
-    pos_ax = ax.get_position().get_points()
-    #ax_width = pos_ax[1, 0] - pos_ax[0, 0]
-    ax_height = pos_ax[1, 1] - pos_ax[0, 1]
-
-    ax_bar = fig.add_axes([pos_ax[1,0] + sep / fig_size_cm[0], pos_ax[0, 1], width / fig_size_cm[0], ax_height])
-    fig.colorbar(im, cax=ax_bar, orientation='vertical')
+from emi1d.modeling.forward_models import calc_rho_app
+from emi1d.data_preparation.utils import get_single_metadata, make_regular_grid
 
 
+class dataframe_inversion():
+    def __init__(self):
+        pass
 
-def is_outlier(array, filt_len, thresh=3.0):
-	nsteps = int(np.ceil(len(array) / filt_len))
-	valid = True * np.ones_like(array)
-	for i in range(nsteps):
-		index_ini = i*filt_len
-		index_end = i*filt_len+filt_len * (i*filt_len+filt_len <= len(array)) + len(array) * (i*filt_len+filt_len > len(array))
-		array_i = array[index_ini:index_end]
-
-		median = np.median(array_i)
-		diff = np.abs((array_i - median))
-		med_abs_deviation = np.median(diff)
-
-		modified_z_score = 0.6745 * diff / med_abs_deviation
-
-		valid_partial = (modified_z_score < thresh)
-
-		valid[index_ini:index_end] = valid_partial * (valid_partial  == True)
-
-	return valid
-
-def boxcar(array, filt_len=3):
-    cumsum, moving_aves = [0], []
-    for i, x in enumerate(array, 1):
-        cumsum.append(cumsum[i-1] + x)
-        if i>=filt_len:
-            moving_ave = (cumsum[i] - cumsum[i-filt_len])/filt_len
-            #can do stuff with moving_ave here
-            moving_aves.append(moving_ave)
-        else:
-            moving_ave = x
-            moving_aves.append(moving_ave)
-
-    array_2 = np.array(moving_aves)
-
-    return array_2
-    
-
-def separation_content(df, header='HCP'):
-    sep_list = []
-    nstring = len(header)
-    for headi in df.columns:
-        if headi[0:nstring] == header:
-            sep_list.append(headi[nstring:nstring+2])
-
-    sep_list = list(dict.fromkeys(sep_list))  # remove repeated values
-
-    return sep_list
-
-
-def calc_Q_HCP(sigma_app, separation):
-    Q_HCP = 0.25 * (2.0 * np.pi * 9000.0) * (4 * np.pi * 10 ** -7) * (separation ** 2) * (sigma_app / 1000.)
-    return Q_HCP * (10 ** 6)
-
-
-def calc_Q_PRP(sigma_app, separation):
-    Q_PRP = 0.25 * (2.0 * np.pi * 9000.0) * (4 * np.pi * 10 ** -7) * (separation ** 2) * (sigma_app / 1000.)
-    return Q_PRP * (10 ** 6)
-
-def rho_app_approx(hs_h0, s):
-    u0 = 4 * np.pi * (10 ** -7)
-    rho_app = 4 / (9000 * 2 * np.pi * u0 * s ** 2) * hs_h0
-    return rho_app * 1000
-
-
-class dualem_fop():
-    def __init__(self, zIN, step=0.03):
-        self.h = 0.2  # height of the dualem (don't set it to zero; otherwise, the numerical integration crashes
-        self.coilspacing_HCP = np.array([2.0, 4.0, 8.0])  # coil spacing
-        self.coilspacing_PRP = np.array([2.1, 4.1, 8.1])  # coil spacing
-        self.w = 9000 * (2 * np.pi)  # Hertz
-        self.nlay = len(zIN)  # without air
-        self.dzIN = np.flip(np.diff(zIN))
-        self.u0 = 4 * np.pi * (10 ** -7)
-        #self.ht_z = HankelTransform(nu=0, N=120, h=0.03)  # Create the HankelTransform instance
-        #self.ht_rho = HankelTransform(nu=1, N=120, h=0.03)
-        #self.ht_z = HankelTransform(nu=0, N=None, h=0.01)  # slow
-        #self.ht_rho = HankelTransform(nu=1, N=None, h=0.01)  # slow
-        self.ht_z = HankelTransform(nu=0, N=120, h=step)
-        self.ht_rho = HankelTransform(nu=1, N=120, h=step)
-
-    def f_r_over_r(self, lambda_EM):
-        k_N = (-1j * self.u0 * self.model[0] * self.w) ** 0.5  # I'm using Timo's type of grid
-        u_cap_N = (lambda_EM ** 2 - k_N ** 2) ** 0.5
-        u_cap_n = 0  # this is unnecessary?
-        for i in range(1, self.nlay):
-            k_n = (-1j * self.u0 * self.model[i] * self.w) ** 0.5  # I'm using Timo's type of grid
-            u_n = (lambda_EM ** 2 - k_n ** 2) ** 0.5
-
-            u_cap_n = u_n * ((u_cap_N + u_n * np.tanh(u_n * self.dzIN[i-1])) / (u_n + u_cap_N * np.tanh(u_n * self.dzIN[i-1])))
-            u_cap_N = u_cap_n
-
-        rTE = (lambda_EM - u_cap_N) / (lambda_EM + u_cap_N)
-        f_x = rTE * np.exp(-2 * lambda_EM * self.h) * lambda_EM
-
-        return f_x
-
-    def response(self, model):  # TODO: vectorize this method
-        self.model = model  # this might not work if I want to parallelize the code
-        # Hz equation 4.46 Ward / (4*pi*rho**3)
-        Q_Hsz_over_H = (self.coilspacing_HCP ** 3) * np.imag(self.ht_z.transform(self.f_r_over_r, self.coilspacing_HCP, ret_err=False))
-        I_Hsz_over_H = (self.coilspacing_HCP ** 3) * np.real(self.ht_z.transform(self.f_r_over_r, self.coilspacing_HCP, ret_err=False))
-
-        # Hrho equation 4.45 Ward / (4*pi*rho**3)
-        Q_Hsrho_over_H = (self.coilspacing_PRP ** 3) * np.imag(self.ht_rho.transform(self.f_r_over_r, self.coilspacing_PRP, ret_err=False))
-        I_Hsrho_over_H = (self.coilspacing_PRP ** 3) * np.real(self.ht_rho.transform(self.f_r_over_r, self.coilspacing_PRP, ret_err=False))
-
-        fop_list = []
-        for i_coil in range(len(self.coilspacing_HCP)):
-            fop_list.append(Q_Hsz_over_H[i_coil])
-            fop_list.append(I_Hsz_over_H[i_coil])
-            fop_list.append(Q_Hsrho_over_H[i_coil])
-            fop_list.append(I_Hsrho_over_H[i_coil])
-
-        fop = -np.array(fop_list) * (10 ** 6)
-
-        #fop = -np.array([Q_Hsz_over_H[0], I_Hsz_over_H[0], Q_Hsz_over_H[1], I_Hsz_over_H[1], Q_Hsz_over_H[2], I_Hsz_over_H[2], Q_Hsrho_over_H[0], I_Hsrho_over_H[0], Q_Hsrho_over_H[1], I_Hsrho_over_H[1], Q_Hsrho_over_H[2], I_Hsrho_over_H[2]])
-
-        return fop
-
-
-class dualem_invert():
-    def __init__(self, df, zIN, lambda_reg=10, plot_steps=False):
-        self.plot_steps = plot_steps
-        self.df = df
-        self.nlay = len(zIN) 
-        #self.weights = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]) 
-        self.weights = np.array([1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0]) 
-        #sensors= [Q_Hsz_over_H[0], I_Hsz_over_H[0], Q_Hsrho_over_H[0], I_Hsrho_over_H[0], Q_Hsz_over_H[1], I_Hsz_over_H[1], Q_Hsrho_over_H[1], I_Hsrho_over_H[1], Q_Hsz_over_H[2], I_Hsz_over_H[2], Q_Hsrho_over_H[2], I_Hsrho_over_H[2]]
-
-        # Irregular grid
-        self.zIN = zIN
-        self.nIN = len(zIN)
-        self.dzIN = np.diff(self.zIN)
-        self.zN = 0.5 * (zIN[1:self.nIN] + zIN[0:self.nIN-1])
-        dzN = np.diff(self.zN)
-        self.dzN = np.hstack((dzN[0:1], dzN))
-
+class emi1d_invert():
+    def __init__(self, fop, dz, nlay, weights, lambda_reg=10, rel_noise=0.05):
+        self.fop = fop
         self.lambda_reg = lambda_reg
-        #self.rel_noise = rel_noise
-        self.fop = dualem_fop(self.zIN)
+        self.weights = weights
+        self.rel_noise = rel_noise
+        self.dz = dz  # for inversion grid
+        self.nlay = nlay  # for inversion grid
 
-        self.npoints = len(df)
-        self.ndata = 2 * (len(self.fop.coilspacing_HCP) + len(self.fop.coilspacing_PRP))
-        self.sep_content = ['2', '4', '8']
-        self.ini_model()
-        self.model_grid = np.ones((self.nlay, ))
+    def invert(self, observed_data):
+        """
+        Function to invert the observed emi1d data
+        observed_data: dict
+            Dictionary whose items contain the responses
+            :math:`H_{\mathrm{s}}/H_{\mathrm{p}}`, and
+            whose keys represent the metadata of the response. For example:
 
-    def ini_model(self):
-        sigma_avg = np.zeros((self.npoints, ))
-        for i, sepi in enumerate(self.sep_content):
-            sigma_avg = sigma_avg + self.df['H' + sepi + 'mS_m'] / 1000.0
-            sigma_avg = sigma_avg + self.df['P' + sepi + 'mS_m'] / 1000.0
+            * Q_HCP_9000_1.0: Quadrature HCP response at 9000 Hz and 1.0 meter source-receiver separation
+            * I_PRP_9000_1.0: Inphase PRP response at 9000 Hz and 1.0 meter source-receiver separation
+            * etc
+        """
+        # Step 1: Initialize the model based on the observed data
+        initial_model = self.initialize_model(observed_data)
 
-        sigma_avg = sigma_avg / (self.ndata / 2)
+        # Step 2: Construct the error matrix
+        error_vector = 1.0 / self.df_meas['rel_noise'] * np.ones_like(initial_model)
 
-        self.sigma_ini = sigma_avg
+        # Step 3: Construct the regularization matrix
+        regularization_matrix = self.construct_regularization_matrix(initial_model)
+
+        # Step 4: Build the objective function
+        objective_function = self.objective_function(error_vector, regularization_matrix, initial_model)
+
+        # Step 5: Minimize the objective function (inversion)
+        inverted_parameters = self.minimize_objective_function(objective_function)
+
+        return inverted_parameters
+
+    def make_grid(self):
+        self.dz = make_regular_grid(self.nlay, self.dz)
+
+    def get_metadata(self, observed_data):
+        meas_data = []
+        metadata = []
+
+        # Extracting metadata and observed data separately
+        for key, observation in observed_data:
+            meta_dict_i = get_single_metadata(key)
+            metadata.append(meta_dict_i)
+            meas_data.append(observation)
+
+        # Transpose list of dictionaries into a dictionary of lists
+        dict_meas = {key: [d[key] for d in metadata] for key in metadata[0]}
+        dict_meas['measured_data'] = meas_data
+
+        # Add noise
+        dict_meas['rel_noise'] = self.rel_noise
+
+        return pd.DataFrame(data=dict_meas)
+
+    def initialize_model(self, observed_data):
+        df_meas = self.get_metadata(observed_data)
+        df_meas['rho_app'] = map(
+            calc_rho_app,
+            df_meas['measured_data'],
+            df_meas['s'],
+            df_meas['freq']
+        )
+        df_meas['sigma_app'] = 1.0 / df_meas['rho_app']
+
+        self.df_meas = df_meas
+
+        model_ini = df_meas['sigma_app'].mean() * np.ones_like(self.dz)
+        return model_ini
+
+
+    def construct_regularization_matrix(self, regularization_type="smooth"):
+        """
+        Regularization matrix
+
+        Parameters
+        ----------
+        regularization_type: str
+            Regularization type 'smooth' or 'identity'.
+            Smooth regularization creates a second derivative matrix
+        """
+        if regularization_type == 'smooth':
+            C_m = np.zeros((self.nlay-1, self.nlay))
+            np.fill_diagonal(C_m, -1)
+            np.fill_diagonal(C_m[:, 1:], 1)
+            C_m = C_m / self.dz[:, None]
+
+        if regularization_type == 'identity':
+            C_m = np.identity(self.nlay)
+
+        return C_m
 
     def objective_function(self, log_model_values, d, relnoise, log_ini_model, lambda_reg, Cm):
+        """
+        Objective function to be minimized in the inversion process.
+        The objective function has two components the data functional,
+        and the regularization term
+        :math:`\Phi = \Phi_{\mathrm{d}} + \lambda \Phi_{\mathrm{g}}`
+        The data functional 
+        :math:`\Phi_\mathrm{d} = (\underline{d}-f(\underline{g}))^\mathrm{T}\underline{\underline{D}}^\mathrm{T}\underline{\underline{D}}(\underline{d}-f(\underline{g}))`
+
+        The regularization term
+        :math:`\Phi_\mathrm{g} = (\underline{g} - \underline{g}_{\mathrm{ref}})^\mathrm{T}\underline{\underline{C}}^\mathrm{T}\underline{\underline{C}}(\underline{g} - \underline{g}_{\mathrm{ref}})`
+        """
         model_values = np.exp(log_model_values)
         resp = self.fop.response(model_values)
         log_resp = np.log(np.abs(resp))  # negative values are physically possible
@@ -217,27 +133,9 @@ class dualem_invert():
 
         return phi
 
-    def callbackF(self, log_model_values_i):
-        print('##################################')
-        model_values = np.exp(log_model_values_i)
-        resp = self.fop.response(model_values)
-        plt.plot(self.d_i, resp, '.')
-        plt.plot(self.d_i, self.d_i, 'k-')
-        plt.ylim(-20000, 100000)
-        plt.pause(0.000001)
-        plt.draw()
+    def minimize_objective_function(self):
+        pass
 
-    def C_matrix(self, dzN, C_m_type='identity'):
-        if C_m_type == 'smooth':
-            C_m = np.zeros((self.nlay-1, self.nlay))
-            np.fill_diagonal(C_m, -1)
-            np.fill_diagonal(C_m[:, 1:], 1)
-            C_m = C_m / dzN[:, None]
-
-        if C_m_type == 'identity':
-            C_m = np.identity(self.nlay)
-
-        return C_m
 
     def run_inversion(self):
         start = time.time()
