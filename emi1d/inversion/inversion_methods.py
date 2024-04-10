@@ -116,10 +116,10 @@ class emi1d_invert():
         and the regularization term
         :math:`\Phi = \Phi_{\mathrm{d}} + \lambda \Phi_{\mathrm{g}}`
         The data functional 
-        :math:`\Phi_\mathrm{d} = (\underline{d}-f(\underline{g}))^\mathrm{T}\underline{\underline{D}}^\mathrm{T}\underline{\underline{D}}(\underline{d}-f(\underline{g}))`
+        :math:`\Phi_\mathrm{d} = (\\underline{d}-f(\\underline{g}))^\mathrm{T}\\underline{\\underline{D}}^\mathrm{T}\\underline{\\underline{D}}(\\underline{d}-f(\\underline{g}))`
 
         The regularization term
-        :math:`\Phi_\mathrm{g} = (\underline{g} - \underline{g}_{\mathrm{ref}})^\mathrm{T}\underline{\underline{C}}^\mathrm{T}\underline{\underline{C}}(\underline{g} - \underline{g}_{\mathrm{ref}})`
+        :math:`\Phi_\mathrm{g} = (\\underline{g} - \\underline{g}_{\mathrm{ref}})^\mathrm{T}\\underline{\\underline{C}}^\mathrm{T}\\underline{\\underline{C}}(\\underline{g} - \\underline{g}_{\mathrm{ref}})`
         """
         model_values = np.exp(log_model_values)
         resp = self.fop.response(model_values)
